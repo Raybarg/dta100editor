@@ -7,7 +7,7 @@ namespace dta100editor
 	template <typename T>
 	struct Map
 	{
-		void Create(size_t w, size_t h)
+		void Create(int32_t w, int32_t h)
 		{
 			width = w;
 			height = h;
@@ -31,7 +31,7 @@ namespace dta100editor
 			std::copy(&other.data[0], &other.data[0] + this->pixels, &this->data[0]);
 		}
 
-		T get(const size_t x, const size_t y) const
+		T get(const int32_t x, const int32_t y) const
 		{
 			if (x < width && y < height)
 				return data[y * width + x];
@@ -39,15 +39,15 @@ namespace dta100editor
 				return 0;
 		}
 
-		void set(const size_t x, const size_t y, const T value)
+		void set(const int32_t x, const int32_t y, const T value)
 		{
 			if (x < width && y < height)
 				data[y * width + x] = value;
 		}
 
-		size_t width = 0;
-		size_t height = 0;
-		size_t pixels = 0;
+		int32_t width = 0;
+		int32_t height = 0;
+		int32_t pixels = 0;
 		std::unique_ptr<T[]> data = nullptr;
 	};
 }

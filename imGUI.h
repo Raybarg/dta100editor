@@ -69,7 +69,10 @@ namespace imgui
 		olc::vi2d pos = { x, y };
 		olc::vi2d size = { 64, 48 };
 
-		int length = sText.length();
+		size_t textlength = sText.length();
+		if (textlength > INT32_MAX) return false; // Failsafe for overflow exception
+		int32_t length = static_cast<int32_t>(textlength);
+		
 		olc::vi2d txtPos = { x + size.x / 2 - length * 4, y + size.y / 2 - 4 };
 
 		pge->FillRect(pos + olc::vi2d{ 5, 5 }, size, olc::DARK_GREY); // Shadow
@@ -163,7 +166,7 @@ namespace imgui
 	{
 		olc::vi2d pos = { x, y };
 
-		int len = strlen(buffer);
+		size_t len = strlen(buffer);
 		int changed = 0;
 
 		// Check for hotness

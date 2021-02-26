@@ -27,20 +27,37 @@ namespace dta100editor
 		int green;
 		int blue;
 
+		olc::Sprite* sprMap = nullptr;
+		olc::Decal* decMap = nullptr;
+
+		olc::Sprite* sprScope = nullptr;
+		olc::Decal* decScope = nullptr;
+
 
 	public:
 		bool OnUserCreate() override
 		{
 			dta100map.Create(100, 100);
-			for (size_t i = 0; i < dta100map.width; i++)
-				for (size_t j = 0; j < dta100map.height; j++)
+			sprMap = new olc::Sprite(100, 100);
+			sprScope = new olc::Sprite(scope_size * 20, scope_size * 20);
+			for (int32_t i = 0; i < dta100map.width; i++)
+				for (int32_t j = 0; j < dta100map.height; j++)
+				{
 					dta100map.set(i, j, olc::Pixel(rand() % 256, rand() % 256, rand() % 256).n);
+					sprMap->SetPixel(i, j, olc::Pixel(rand() % 256, rand() % 256, rand() % 256).n);
+				}
+			decMap = new olc::Decal(sprMap);
+			decScope = new olc::Decal(sprScope);
 
 			selector.Create(20, 20, dta100map.width, dta100map.height);
+
+			updateSelector();
+
 			UI = new imgui::ImmediateModeGUI(this);
 			red = 0;
 			green = 0;
 			blue = 0;
+
 			return true;
 		}
 
@@ -60,19 +77,6 @@ namespace dta100editor
 
 
 			UI->Prepare();
-			/*
-			if (UI->Button(GEN_ID, 50, 100, "Red"))
-			{
-				testColor = olc::RED;
-				testText = "It's red!";
-			}
-			if (UI->Button(GEN_ID, 150, 100, "White"))
-			{
-				testColor = olc::WHITE;
-				testText = "It's white!";
-
-			}
-			*/
 			UI->Slider(GEN_ID, 5, 550, 255, red);
 			UI->Slider(GEN_ID, 45, 550, 255, green);
 			UI->Slider(GEN_ID, 85, 550, 255, blue);
@@ -89,13 +93,7 @@ namespace dta100editor
 
 		void drawMap()
 		{
-			for (size_t x = 0; x < dta100map.width; x++)
-			{
-				for (size_t y = 0; y < dta100map.height; y++)
-				{
-					Draw(50+x, 50+y, dta100map.get(x, y));
-				}
-			}
+			DrawDecal(olc::vi2d{ 50, 50 }, decMap);
 		}
 
 		void drawSelector()
@@ -114,24 +112,40 @@ namespace dta100editor
 				if (GetMouse(0).bHeld)
 				{
 					selector.Set(x - selector.width / 2, y - selector.height / 2);
-					//DrawString(olc::vi2d{ 10, 400 }, std::to_string(x), olc::RED);
+					updateSelector();
 				}
 			}	
 		}
 
-		void drawScope()
+		void updateSelector()
 		{
 			olc::vi2d a = olc::vi2d(scope_size, scope_size);
 			for (int32_t x = selector.x; x < selector.x + selector.width; x++)
 				for (int32_t y = selector.y; y < selector.y + selector.height; y++)
 				{
-					int32_t sx = 200 + (x - selector.x) * scope_size;
+					int32_t sx = (x - selector.x) * scope_size;
 					int32_t sy = (y - selector.y) * scope_size;
-					FillRect(olc::vi2d{ sx, sy }, a, dta100map.get(x, y));
+					scopeTile(sx, sy, dta100map.get(x, y), decScope->sprite);
 				}
-			for (int32_t i = 0; i < selector.width; i++)
-				for (int32_t j = 0; j < selector.height; j++)
-					DrawRect(olc::vi2d(200 + i * scope_size, j * scope_size), a, olc::BLACK);
+			decScope->Update();
+		}
+
+		void updateSingleSelector(int32_t x, int32_t y, uint32_t c)
+		{
+			scopeTile(x * scope_size, y * scope_size, c, decScope->sprite);
+			decScope->Update();
+		}
+
+		void scopeTile(int32_t x, int32_t y, uint32_t c, olc::Sprite* spr)
+		{
+			for (int i = x+1; i < x + scope_size-1; i++)
+				for (int j = y + 1; j < y + scope_size - 1; j++)
+					spr->SetPixel(i, j, c);
+		}
+
+		void drawScope()
+		{
+			DrawDecal(olc::vi2d{ 200, 1 }, decScope);
 		}
 
 		void checkDraw()
@@ -141,12 +155,16 @@ namespace dta100editor
 
 			if (mx > 200 && GetMouse(0).bHeld)
 			{
-				int32_t sx = selector.x + (mx - 200) / scope_size;
-				int32_t sy = selector.y + my / scope_size;
+				int32_t offx = (mx - 200) / scope_size;
+				int32_t offy = my / scope_size;
+				int32_t sx = selector.x + offx;
+				int32_t sy = selector.y + offy;
 
 				dta100map.set(sx, sy, olc::Pixel(red, green, blue).n);
+				decMap->sprite->SetPixel(sx, sy, olc::Pixel(red, green, blue).n);
+				decMap->Update();
 
-				//DrawString(olc::vi2d{ 10, 300 }, std::to_string(mx), olc::RED);
+				updateSingleSelector(offx, offy, olc::Pixel(red, green, blue).n);
 			}
 		}
 
@@ -175,8 +193,11 @@ namespace dta100editor
 int main()
 {
 	dta100editor::dta100editor main;
-	if (main.Construct(1024, 768, 1, 1))
+	if (main.Construct(1024, 768, 1, 1, false, true))
+	{
+		main.SetPixelMode(olc::Pixel::Mode::NORMAL);
 		main.Start();
+	}
 	return 0;
 }
 
