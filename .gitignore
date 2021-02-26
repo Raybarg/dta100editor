@@ -30,3 +30,21 @@
 *.exe
 *.out
 *.app
+
+### Visual studio local directory ###
+/.vs/
+
+### Output and Cache Directories ###
+/*/External/
+/Debug/
+/*/Debug/
+/*/Docs/
+/*/Release/
+/*/build/
+/*/bin/
+/*/out/
+/*/cmake-build-*/
+
+### User specifics ###
+*.vcxproj.filters
+*.vcxproj.user
